@@ -21,6 +21,13 @@ class WorkFormat(str, Enum):
     HYBRID = "HYBRID"
 
 
+class Experience(str, Enum):
+    MORE_THAN_6 = "moreThan6"
+    BETWEEN_3_AND_6 = "between3And6"
+    BETWEEN_1_AND_3 = "between1And3"
+    NO_EXPERIENCE = "noExperience"
+
+
 @dataclass
 class Vacancy:
     """Модель данных вакансии."""
@@ -78,7 +85,8 @@ class VacancySearchService:
         self,
         query: Optional[str] = None,
         page_num: int = 0,
-        work_format: Optional[list[WorkFormat]] = None
+        work_format: Optional[list[WorkFormat]] = None,
+        experience: Optional[Experience] = None
     ) -> list[dict]:
         """
         Поиск вакансий, соответствующих запросу.
@@ -87,6 +95,7 @@ class VacancySearchService:
             query: Текст запроса. По умолчанию используется значение из настроек.
             page_num: Номер страницы для пагинации (начиная с 0).
             work_format: Фильтр по формату работы (REMOTE/FIELD_WORK/ON_SITE/HYBRID).
+            experience: Фильтр по опыту (moreThan6/between3And6/between1And3/noExperience).
             
         Возвращает:
             Список словарей вакансий с заголовком, URL, работодателем и описанием.
@@ -109,6 +118,8 @@ class VacancySearchService:
             }
             if work_format:
                 params["work_format"] = [item.value for item in work_format]
+            if experience:
+                params["experience"] = experience.value
             url = f"https://hh.ru/search/vacancy?{urlencode(params, doseq=True)}"
             
             await page.goto(url, wait_until="domcontentloaded")

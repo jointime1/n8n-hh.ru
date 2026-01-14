@@ -7,7 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, HttpUrl
 
 from .config import get_settings
-from .services import browser_manager, VacancySearchService, VacancyApplyService, WorkFormat
+from .services import browser_manager, VacancySearchService, VacancyApplyService, WorkFormat, Experience
 
 logging.basicConfig(
     level=logging.INFO,
@@ -70,17 +70,28 @@ async def search_vacancies(
     work_format: Optional[list[WorkFormat]] = Query(
         default=None,
         description="Work format filter (REMOTE - Удалённо/FIELD_WORK - Разъездной /ON_SITE - На месте работодателя/HYBRID - Гибрид)"
-    )
+    ),
+    experience: Optional[Experience] = Query(
+        default=None,
+        description="Experience filter (moreThan6/between3And6/between1And3/noExperience)"
+    ),
 ) -> list[dict]:
     """
     Поиск вакансий на HH.ru.
 
     Возвращает список вакансий с заголовком, URL, работодателем и описанием.
     """
-    logger.info(f"Search request: text='{text}', page={page}, work_format={work_format}")
+    logger.info(
+        f"Search request: text='{text}', page={page}, work_format={work_format}, experience={experience}"
+    )
 
     try:
-        vacancies = await search_service.search(query=text, page_num=page, work_format=work_format)
+        vacancies = await search_service.search(
+            query=text,
+            page_num=page,
+            work_format=work_format,
+            experience=experience
+        )
         return vacancies
     except FileNotFoundError as e:
         raise HTTPException(status_code=401, detail=str(e))
