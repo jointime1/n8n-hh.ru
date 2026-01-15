@@ -10,7 +10,7 @@ from .config import get_settings
 from .services import browser_manager, VacancySearchService, VacancyApplyService, WorkFormat, Experience
 
 logging.basicConfig(
-    level=logging.INFO,
+    level=logging.DEBUG,
     format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
     datefmt="%Y-%m-%d %H:%M:%S"
 )
