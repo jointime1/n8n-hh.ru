@@ -1,5 +1,5 @@
 """Асинхронный сервис отклика на вакансии."""
-
+import asyncio
 import logging
 import re
 from datetime import datetime
@@ -76,14 +76,15 @@ class VacancyApplyService:
         """
         try:
             logger.debug("Waiting for application modal...")
-            await page.wait_for_selector("[data-qa='vacancy-response-popup']", timeout=5000)
-            await page.wait_for_timeout(1000)
+            await asyncio.sleep(1)
+            await page.wait_for_selector('div[data-qa="modal-overlay"]', timeout=5000)
 
-            modal = page.locator("[data-qa='vacancy-response-popup']")
-            add_letter_btn = modal.locator("button:has-text('Добавить сопроводительное')")
+            modal = page.locator('div[data-qa="modal-overlay"]')
+            add_letter_btn = modal.locator("text=Добавить сопроводительное")
             add_letter_count = await add_letter_btn.count()
             logger.debug(f"Modal 'add cover letter' button count: {add_letter_count}")
             if add_letter_count > 0:
+                await add_letter_btn.first.scroll_into_view_if_needed()
                 await add_letter_btn.first.click()
                 logger.debug("Modal 'add cover letter' clicked")
                 await page.wait_for_timeout(500)
@@ -99,10 +100,11 @@ class VacancyApplyService:
             else:
                 logger.warning("Cover letter field not found in modal")
 
-            submit_btn = modal.locator("button[data-qa='vacancy-response-submit-popup'], button:has-text('Откликнуться')")
+            submit_btn = modal.locator("text=Откликнуться")
             submit_btn_count = await submit_btn.count()
             logger.debug(f"Modal submit button count: {submit_btn_count}")
             if submit_btn_count > 0:
+                await submit_btn.first.scroll_into_view_if_needed()
                 await submit_btn.click()
                 logger.debug("Modal submit clicked")
                 await page.wait_for_timeout(3000)
@@ -263,11 +265,11 @@ class VacancyApplyService:
                     return result.to_dict()
 
                 # Поиск кнопки отклика
-                apply_btn = page.locator("[data-qa='vacancy-response-link-top']")
+                apply_btn = page.locator("[data-qa='vacancy-response-link-top']:visible")
                 apply_top_count = await apply_btn.count()
                 logger.debug(f"Apply top button count: {apply_top_count}")
                 if apply_top_count == 0:
-                    apply_btn = page.locator("[data-qa='vacancy-response-link-bottom']")
+                    apply_btn = page.locator("[data-qa='vacancy-response-link-bottom']:visible")
 
                 apply_bottom_count = await apply_btn.count()
                 logger.debug(f"Apply bottom button count: {apply_bottom_count}")
@@ -288,7 +290,15 @@ class VacancyApplyService:
                 await page.wait_for_timeout(2000)
                 logger.debug("Standard apply button clicked")
 
-                # Стратегия 4: Сопроводительное письмо после отклика
+                # Стратегия 4: Модальное окно после отклика
+                try:
+                    result = await self._fill_cover_letter_modal(page, message)
+                    if result:
+                        return result.to_dict()
+                except PlaywrightTimeoutError:
+                    logger.debug("Application modal not detected after apply click")
+
+                # Стратегия 5: Сопроводительное письмо после отклика
                 result = await self._try_post_apply_letter(page, message)
                 if result:
                     return result.to_dict()
