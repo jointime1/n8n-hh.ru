@@ -1,0 +1,7 @@
+__pycache__
+.venv
+.env
+.git
+.gitignore
+*.pyc
+hh_session.json

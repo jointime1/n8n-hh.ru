@@ -88,16 +88,19 @@ class BrowserManager:
                 await context.close()
 
     @asynccontextmanager
-    async def get_interactive_context(self) -> AsyncGenerator[tuple[BrowserContext, Page], None]:
+    async def get_interactive_context(self, headless: Optional[bool] = None) -> AsyncGenerator[tuple[BrowserContext, Page], None]:
         """
         Получение интерактивного контекста браузера для ручных операций (например, входа).
         
         Возвращает:
             Кортеж (context, page)
         """
-        # Запуск браузера в обычном (не headless) режиме для интерактивного использования
+        if headless is None:
+            headless = self._settings.browser_headless
+
+        # Запуск браузера для интерактивного использования
         async with async_playwright() as p:
-            browser = await p.chromium.launch(headless=False)
+            browser = await p.chromium.launch(headless=headless)
             context = await browser.new_context()
             page = await context.new_page()
             

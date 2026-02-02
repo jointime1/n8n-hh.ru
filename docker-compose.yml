@@ -1,0 +1,35 @@
+services:
+  hh-automation:
+    build: .
+    image: hh-automation:latest
+    container_name: hh-automation
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./data:/app/data
+      - .:/app # Маппим текущую папку, чтобы изменения в коде работали сразу
+    environment:
+      - SERVER_HOST=0.0.0.0
+      - SERVER_PORT=8000
+      - N8N_FILES_DIR=/app/data
+    restart: unless-stopped
+
+  n8n:
+    image: dockerhub.timeweb.cloud/n8nio/n8n:latest
+    container_name: n8n-docker
+    ports:
+      - "5678:5678"
+    volumes:
+      - n8n_data:/home/node/.n8n
+      - ./data:/app/data
+    environment:
+      - N8N_HOST=localhost
+      - N8N_PORT=5678
+      - N8N_PROTOCOL=http
+      - NODE_ENV=production
+      - WEBHOOK_URL=http://localhost:5678/
+      - HH_SERVER_URL=http://hh-automation:8000 # URL сервера HH Automation
+    restart: unless-stopped
+
+volumes:
+  n8n_data:

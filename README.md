@@ -54,7 +54,90 @@ PAGE_TIMEOUT=30000
 
 ## Запуск
 
-### 1. Авторизация на HH.ru
+### Вариант 1: Запуск через Docker (рекомендуется)
+
+Docker позволяет запустить приложение без установки Python и зависимостей на вашу систему.
+
+#### Требования
+
+- Docker Desktop (для Windows/Mac) или Docker Engine (для Linux)
+- docker-compose (обычно идет в комплекте с Docker Desktop)
+
+#### 1. Сборка и запуск контейнеров
+
+В корневой директории проекта выполните:
+
+```bash
+docker-compose up -d
+```
+
+Эта команда:
+- Соберет Docker образ приложения
+- Запустит два контейнера: `hh-automation` (API сервер) и `n8n` (workflow система)
+- Сервер HH Automation будет доступен на `http://localhost:8000`
+- n8n будет доступен на `http://localhost:5678`
+
+#### 2. Авторизация на HH.ru
+
+После запуска контейнеров необходимо авторизоваться на HH.ru **один раз**:
+
+```bash
+docker exec -it hh-automation python -m hh_automation.cli.login
+```
+
+Откроется браузер. Войдите в аккаунт HH.ru, затем нажмите Enter в терминале. Сессия сохранится в директории `./data/hh_session.json`.
+
+#### 3. Настройка n8n
+
+1. Откройте `http://localhost:5678` в браузере
+2. Создайте учетную запись n8n (при первом запуске)
+3. Импортируйте workflow из файла `HH.ru Flow (With AI and Pagination).json`
+4. Добавьте Google Gemini API credentials в n8n (Settings → Credentials)
+5. Запустите workflow
+
+P.S. Если не запускается workflow с сервером, поменяйте в узлах адрес сервера на `http://hh-automation:8000`
+#### 4. Управление контейнерами
+
+**Просмотр логов:**
+```bash
+# Все сервисы
+docker-compose logs -f
+
+# Только HH Automation
+docker-compose logs -f hh-automation
+
+# Только n8n
+docker-compose logs -f n8n
+```
+
+**Остановка:**
+```bash
+docker-compose down
+```
+
+**Перезапуск после изменения кода:**
+```bash
+docker-compose restart hh-automation
+```
+
+**Полная пересборка образа:**
+```bash
+docker-compose up -d --build
+```
+
+#### 5. Проверка работоспособности
+
+```bash
+# Проверка API
+curl http://localhost:8000/health
+
+# Swagger документация
+# Откройте в браузере: http://localhost:8000/docs
+```
+
+### Вариант 2: Запуск локально (без Docker)
+
+#### 1. Авторизация на HH.ru
 
 Перед первым использованием сохраните сессию:
 
@@ -64,7 +147,7 @@ python -m hh_automation.cli.login
 
 Откроется браузер. Войдите в аккаунт HH.ru, затем нажмите Enter в терминале.
 
-### 2. Запуск сервера
+#### 2. Запуск сервера
 
 ```bash
 python -m hh_automation.server
@@ -72,7 +155,7 @@ python -m hh_automation.server
 
 Сервер запустится на `http://127.0.0.1:8000`.
 
-### 3. Настройка n8n
+#### 3. Настройка n8n
 
 1. Импортируйте workflow из файла `HH.ru Flow (With AI and Pagination).json`
 2. Добавьте Google Gemini API credentials в n8n (Settings → Credentials)
