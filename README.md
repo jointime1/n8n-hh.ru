@@ -170,10 +170,22 @@ python -m hh_automation.server
 **Параметры:**
 - `text` — поисковый запрос (по умолчанию: "Frontend")
 - `page` — номер страницы, начиная с 0 (по умолчанию: 0)
+- `work_format` — фильтр по формату работы (REMOTE/FIELD_WORK/ON_SITE/HYBRID, можно передавать несколько раз)
+- `experience` — фильтр по опыту (moreThan6/between3And6/between1And3/noExperience)
 
 **Пример:**
 ```bash
 curl "http://127.0.0.1:8000/search?text=Python&page=0"
+```
+
+**Пример с фильтрами формата работы:**
+```bash
+curl "http://127.0.0.1:8000/search?text=Python&page=0&work_format=REMOTE&work_format=HYBRID"
+```
+
+**Пример с фильтром опыта:**
+```bash
+curl "http://127.0.0.1:8000/search?text=Python&page=0&experience=between1And3"
 ```
 
 ### POST /apply
