@@ -16,32 +16,45 @@
             {
               "name": "current_page",
               "stringValue": "0"
+            },
+            {
+              "name": "resumeText",
+              "stringValue": "add your resume..."
+            },
+            {
+              "name": "work_format",
+              "type": "arrayValue",
+              "arrayValue": "[\"REMOTE\"]"
+            },
+            {
+              "name": "experience",
+              "stringValue": "between3And6"
             }
           ]
         },
         "options": {}
       },
-      "id": "cfa3d009-0caf-4f76-943f-0befd0904c89",
+      "id": "082168c3-8e83-454b-8fd7-dcb1302e5430",
       "name": "Initialize Settings",
       "type": "n8n-nodes-base.set",
       "typeVersion": 3,
       "position": [
-        1376,
-        1072
+        -1008,
+        384
       ]
     },
     {
       "parameters": {
-        "url": "=http://127.0.0.1:8000/search?text={{ $json.search_query }}&page={{ $json.current_page }}",
+        "url": "=http://host.docker.internal:8000/search?text={{ $json.search_query }}&page={{ $json.current_page }}&{{ $json.work_format.map(item => `format=${item}`).join(\"&\") }}&experience={{ $json.experience }}",
         "options": {}
       },
-      "id": "ad60fd39-f443-49f6-bf26-0fb6788e5cf2",
+      "id": "f7d20264-b353-4224-bac3-a2b6a9552c8b",
       "name": "Search Vacancies",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4,
       "position": [
-        1600,
-        1008
+        -752,
+        128
       ]
     },
     {
@@ -50,7 +63,8 @@
           "options": {
             "caseSensitive": true,
             "leftValue": "",
-            "typeValidation": "strict"
+            "typeValidation": "strict",
+            "version": 1
           },
           "conditions": [
             {
@@ -59,20 +73,21 @@
               "operator": {
                 "type": "number",
                 "operation": "gt"
-              }
+              },
+              "id": "9d8f23c4-24b8-43a0-a6b1-594d1289b3ce"
             }
           ],
           "combinator": "and"
         },
         "options": {}
       },
-      "id": "24f9beee-5f18-4734-82c1-d88ddfcb7006",
+      "id": "45b594a3-56db-4a1b-9cab-5eca5de50f0d",
       "name": "Has Results?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
       "position": [
-        1824,
-        928
+        -528,
+        112
       ]
     },
     {
@@ -82,10 +97,10 @@
       "type": "n8n-nodes-base.splitInBatches",
       "typeVersion": 3,
       "position": [
-        2048,
-        928
+        -304,
+        96
       ],
-      "id": "cc238ae4-5a65-4535-b35d-ebcc019b33c3",
+      "id": "7d0f8cee-6bc3-4aa5-ac3b-b761cf6f96a7",
       "name": "Loop Over Vacancies"
     },
     {
@@ -94,37 +109,37 @@
           "values": [
             {
               "name": "prompt",
-              "stringValue": "=Сгенерируй ОЧЕНЬ короткое сопроводительное письмо для отклика на вакансию.\n\nВходные данные:\nНазвание вакансии: {{ $json.title }}\nКомпания: {{ $json.employer }}\nОписание/требования: {{ $json.description }}\n\nЖёсткие требования:\n- 2–3 предложения, не больше\n- Без приветствий и подписей\n- Без фраз: «с большим интересом», «уверен», «буду рад», «внести вклад»\n- Текст должен выглядеть как написанный человеком, не HR и не нейросетью\n- Прямо укажи, что есть релевантный опыт по вакансии {{ $json.title }}\n- Профессионально, но разговорно\n- Только финальный текст письма\n- Никаких комментариев, пояснений или советов\n- Русский язык\n- не оставляй в конце системный комментарий с [Ваше имя]"
+              "stringValue": "=Сгенерируй ОЧЕНЬ короткое сопроводительное письмо для отклика на вакансию.\n\nВходные данные:\nНазвание вакансии: {{ $json.title }}\nКомпания: {{ $json.employer }}\nОписание/требования: {{ $json.description }}\nРезюме:\n{{ $('Initialize Settings').item.json.resumeText }}\n\nЖёсткие требования:\n- 2–3 предложения, не больше\n- Без приветствий и подписей\n- Без фраз: «с большим интересом», «уверен», «буду рад», «внести вклад», «в резюме указано»\n- Пиши от первого лица\n- Текст должен выглядеть как написанный человеком, не HR и не нейросетью\n- Прямо укажи, что есть релевантный опыт по вакансии {{ $json.title }}, но опирайся на резюме\n- Профессионально, но разговорно\n- Только финальный текст письма\n- Никаких комментариев, пояснений или советов\n- Русский язык\n- не оставляй в конце системный комментарий с [Ваше имя]\n- Факты релевантного опыта бери ТОЛЬКО из резюме"
             }
           ]
         },
         "options": {}
       },
-      "id": "90af5311-f1c2-49f9-8e4d-dc0850113613",
+      "id": "304a4371-12fe-4040-8445-cbd6f4793048",
       "name": "Prepare AI Prompt",
       "type": "n8n-nodes-base.set",
       "typeVersion": 3,
       "position": [
-        2272,
-        800
+        32,
+        -16
       ]
     },
     {
       "parameters": {
         "method": "POST",
-        "url": "http://127.0.0.1:8000/apply",
+        "url": "http://host.docker.internal:8000/apply",
         "sendBody": true,
         "specifyBody": "json",
         "jsonBody": "={\n  \"url\": \"{{ $json.url }}\",\n  \"message\": \"{{ $json.text }}\"\n}",
         "options": {}
       },
-      "id": "1f149c7f-aa8d-4a38-a35d-aa3953a9fcb7",
+      "id": "41ebf551-5704-438f-b451-86653b1fe843",
       "name": "Apply to Vacancy",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4,
       "position": [
-        3072,
-        800
+        800,
+        -32
       ],
       "alwaysOutputData": false
     },
@@ -133,13 +148,13 @@
         "amount": 5,
         "unit": "seconds"
       },
-      "id": "464e15b9-2108-4813-90e4-0ce6dafe737e",
+      "id": "c47be958-58af-4a95-a3d5-752b5e35ba7d",
       "name": "Wait 5s",
       "type": "n8n-nodes-base.wait",
       "typeVersion": 1,
       "position": [
-        3296,
-        928
+        1024,
+        128
       ],
       "webhookId": "07d53079-a877-4024-a6d2-9c602f6af740"
     },
@@ -167,13 +182,13 @@
         },
         "options": {}
       },
-      "id": "c20a34e9-32aa-4412-987f-3a4826320255",
+      "id": "84505136-310f-46e5-aa92-8bc9981b1031",
       "name": "More Pages?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
       "position": [
-        3520,
-        928
+        1248,
+        128
       ]
     },
     {
@@ -196,13 +211,13 @@
         },
         "options": {}
       },
-      "id": "968a678f-1863-46cc-98a6-1e3b6b1b6dba",
+      "id": "7a4012de-d634-4b17-bb6e-7b823bceb817",
       "name": "Increment Page",
       "type": "n8n-nodes-base.set",
       "typeVersion": 3,
       "position": [
-        3744,
-        928
+        1472,
+        128
       ]
     },
     {
@@ -210,40 +225,24 @@
       "type": "n8n-nodes-base.manualTrigger",
       "typeVersion": 1,
       "position": [
-        1152,
-        1072
+        -1296,
+        384
       ],
-      "id": "03d87698-7ef8-42ce-9965-3ccfc3975fbd",
+      "id": "702678c2-e1e7-4c9f-8c81-26cd16b8f75f",
       "name": "Start Workflow"
     },
     {
       "parameters": {
         "mode": "chooseBranch"
       },
-      "id": "a5f30a81-a451-45d2-81ec-3e549a2573cb",
+      "id": "b2c54b32-06cd-4100-b0e4-7badc2fbc237",
       "name": "Merge",
       "type": "n8n-nodes-base.merge",
       "typeVersion": 2,
       "position": [
-        3968,
-        1168
+        1696,
+        368
       ],
-      "alwaysOutputData": false
-    },
-    {
-      "parameters": {
-        "promptType": "define",
-        "text": "={{ $json.prompt }}",
-        "batching": {}
-      },
-      "type": "@n8n/n8n-nodes-langchain.chainLlm",
-      "typeVersion": 1.8,
-      "position": [
-        2496,
-        800
-      ],
-      "id": "53688241-99ba-4a91-b6c7-a6a6ceacc80e",
-      "name": "Basic LLM Chain",
       "alwaysOutputData": false
     },
     {
@@ -253,17 +252,11 @@
       "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
       "typeVersion": 1,
       "position": [
-        2496,
-        992
+        80,
+        176
       ],
-      "id": "8ba80dda-cda2-49be-a88b-f8ac7b556943",
-      "name": "Google Gemini Chat Model",
-      "credentials": {
-        "googlePalmApi": {
-          "id": "UJQiAUzmwRJh7xoK",
-          "name": "Google Gemini(PaLM) Api account"
-        }
-      }
+      "id": "9c3e8d12-f63e-448b-8de5-ad9f21b04467",
+      "name": "Google Gemini Chat Model"
     },
     {
       "parameters": {
@@ -277,14 +270,54 @@
         },
         "options": {}
       },
-      "id": "1f7ea3cb-c9d7-43c5-aba7-2881043c0f01",
+      "id": "ddbff830-4c3e-412d-9de3-676b77acac01",
       "name": "Prepare Apply Data",
       "type": "n8n-nodes-base.set",
       "typeVersion": 3,
       "position": [
-        2848,
-        800
+        576,
+        -32
       ]
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-5-nano",
+          "mode": "list",
+          "cachedResultName": "gpt-5-nano"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        336,
+        176
+      ],
+      "id": "7c5af738-e84e-4f4c-b48a-0508590aec87",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "MJQ5z2M2HKmU9InL",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.prompt }}",
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.7,
+      "position": [
+        240,
+        -32
+      ],
+      "id": "4ffd60b3-2233-4950-ad95-3acff5ca6bb8",
+      "name": "Basic LLM Chain"
     }
   ],
   "pinData": {},
@@ -344,17 +377,6 @@
         [
           {
             "node": "Prepare AI Prompt",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Prepare AI Prompt": {
-      "main": [
-        [
-          {
-            "node": "Basic LLM Chain",
             "type": "main",
             "index": 0
           }
@@ -421,7 +443,29 @@
         ]
       ]
     },
-    "Google Gemini Chat Model": {
+    "Prepare Apply Data": {
+      "main": [
+        [
+          {
+            "node": "Apply to Vacancy",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare AI Prompt": {
+      "main": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
       "ai_languageModel": [
         [
           {
@@ -442,32 +486,16 @@
           }
         ]
       ]
-    },
-    "Prepare Apply Data": {
-      "main": [
-        [
-          {
-            "node": "Apply to Vacancy",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
     }
   },
   "active": false,
   "settings": {
-    "availableInMCP": false,
-    "timeSavedMode": "fixed",
-    "callerPolicy": "workflowsFromSameOwner",
     "executionOrder": "v1"
   },
-  "versionId": "6913564d-2d79-4f90-a6d6-851f38f9609a",
+  "versionId": "9a262adb-6e33-4f08-9ea8-49766c931c78",
   "meta": {
-    "templateId": "6270",
-    "templateCredsSetupCompleted": true,
-    "instanceId": "0f08ebc03a369d41fff9f667e70b78d30fb91f59659b2d7ca766a3769fc4fbb8"
+    "instanceId": "e7cd9eaeeffdb068e4b7bbf8ceb98e7c1c2a27affbc3a8bc39eb0e348d09dcba"
   },
-  "id": "ZemlS1AR13IkbIpJ",
+  "id": "pC5Yo8BZzvot4ag6",
   "tags": []
 }

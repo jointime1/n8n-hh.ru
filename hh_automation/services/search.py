@@ -2,7 +2,9 @@
 
 import logging
 from dataclasses import dataclass
+from enum import Enum
 from typing import Optional
+from urllib.parse import urlencode
 
 from playwright.async_api import Page
 
@@ -10,6 +12,20 @@ from ..config import get_settings
 from .browser import browser_manager
 
 logger = logging.getLogger(__name__)
+
+
+class WorkFormat(str, Enum):
+    REMOTE = "REMOTE"
+    FIELD_WORK = "FIELD_WORK"
+    ON_SITE = "ON_SITE"
+    HYBRID = "HYBRID"
+
+
+class Experience(str, Enum):
+    MORE_THAN_6 = "moreThan6"
+    BETWEEN_3_AND_6 = "between3And6"
+    BETWEEN_1_AND_3 = "between1And3"
+    NO_EXPERIENCE = "noExperience"
 
 
 @dataclass
@@ -68,7 +84,9 @@ class VacancySearchService:
     async def search(
         self,
         query: Optional[str] = None,
-        page_num: int = 0
+        page_num: int = 0,
+        work_format: Optional[list[WorkFormat]] = None,
+        experience: Optional[Experience] = None
     ) -> list[dict]:
         """
         Поиск вакансий, соответствующих запросу.
@@ -76,6 +94,8 @@ class VacancySearchService:
         Аргументы:
             query: Текст запроса. По умолчанию используется значение из настроек.
             page_num: Номер страницы для пагинации (начиная с 0).
+            work_format: Фильтр по формату работы (REMOTE/FIELD_WORK/ON_SITE/HYBRID).
+            experience: Фильтр по опыту (moreThan6/between3And6/between1And3/noExperience).
             
         Возвращает:
             Список словарей вакансий с заголовком, URL, работодателем и описанием.
@@ -90,11 +110,17 @@ class VacancySearchService:
 
         async with browser_manager.get_page(use_session=True) as page:
             # Сборка URL для поиска
-            url = (
-                f"https://hh.ru/search/vacancy?"
-                f"text={query}&area={self._settings.area_code}"
-                f"&items_on_page=20&page={page_num}"
-            )
+            params: dict[str, object] = {
+                "text": query,
+                "area": self._settings.area_code,
+                "items_on_page": 20,
+                "page": page_num,
+            }
+            if work_format:
+                params["work_format"] = [item.value for item in work_format]
+            if experience:
+                params["experience"] = experience.value
+            url = f"https://hh.ru/search/vacancy?{urlencode(params, doseq=True)}"
             
             await page.goto(url, wait_until="domcontentloaded")
             
